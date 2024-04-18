@@ -251,8 +251,8 @@ if train_model_hourly:
 
 # Sidebar for DataFrame selection
 st.sidebar.title("DataFrame Selection for Daily Data")
-st.markdown("""
-- Warning: When you select your start date, the app will give an error, once you select your end date it will be resolved.
+st.sidebar.markdown("""
+- Warning: When you select your start date, the app will give an error, once you select your end date it will be resolved. 
 """)    
 dataframe_options = {
     "Provo Daily Data": df_daily_provo,
