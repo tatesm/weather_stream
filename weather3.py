@@ -339,7 +339,9 @@ df_selected = dataframe_options[selected_dataframe_name]
 
 # Updating existing filters to use selected DataFrame
 st.sidebar.title("Filter Options for Hourly Data")
-
+st.sidebar.markdown("""
+- Warning: When you select your start date, the app will give an error, once you select your end date it will be resolved. 
+""") 
 # Date range filter
 if not df_selected.empty:
     start_date, end_date = st.sidebar.date_input(
