@@ -251,9 +251,7 @@ if train_model_hourly:
 
 # Sidebar for DataFrame selection
 st.sidebar.title("DataFrame Selection for Daily Data")
-st.sidebar.markdown("""
-- Warning: When you select your start date, the app will give an error, once you select your end date it will be resolved. 
-""")    
+
 dataframe_options = {
     "Provo Daily Data": df_daily_provo,
     "Redmond Daily Data": df_redmond_day
@@ -263,7 +261,9 @@ df_selected = dataframe_options[selected_dataframe_name]
 
 # Updating existing filters to use selected DataFrame
 st.sidebar.title("Filter Options for Daily Data")
-
+st.sidebar.markdown("""
+- Warning: When you select your start date, the app will give an error, once you select your end date it will be resolved. 
+""")   
 # Date range filter
 if not df_selected.empty:
     start_date, end_date = st.sidebar.date_input(
@@ -272,26 +272,27 @@ if not df_selected.empty:
         min_value=df_selected['date'].min(),
         max_value=df_selected['date'].max()
     )
-    start_date = pd.to_datetime(start_date).tz_localize('UTC')
-    end_date = pd.to_datetime(end_date).tz_localize('UTC')
-    df_filtered = df_selected[(df_selected['date'] >= start_date) & 
-                                (df_selected['date'] <= end_date)]
+    if len(date_range) == 2:
+        start_date = pd.to_datetime(start_date).tz_localize('UTC')
+        end_date = pd.to_datetime(end_date).tz_localize('UTC')
+        df_filtered = df_selected[(df_selected['date'] >= start_date) & 
+                                    (df_selected['date'] <= end_date)]
 
-    # Weather code filter
-    weather_options = df_selected['weather_code'].dropna().unique()
-    selected_weather = st.sidebar.multiselect('Select weather conditions', options=weather_options)
-    if selected_weather:
-        df_filtered = df_filtered[df_filtered['weather_code'].isin(selected_weather)]
+        # Weather code filter
+        weather_options = df_selected['weather_code'].dropna().unique()
+        selected_weather = st.sidebar.multiselect('Select weather conditions', options=weather_options)
+        if selected_weather:
+            df_filtered = df_filtered[df_filtered['weather_code'].isin(selected_weather)]
 
-    # Temperature range selector
-    if not df_filtered.empty:
-        min_temp, max_temp = st.sidebar.slider("Select temperature range (°F)", 
-                                               float(df_filtered['temperature_2m_mean'].min()), 
-                                               float(df_filtered['temperature_2m_mean'].max()), 
-                                               (float(df_filtered['temperature_2m_mean'].min()), 
-                                               float(df_filtered['temperature_2m_mean'].max())))
-        df_filtered = df_filtered[(df_filtered['temperature_2m_mean'] >= min_temp) & 
-                                  (df_filtered['temperature_2m_mean'] <= max_temp)]
+        # Temperature range selector
+        if not df_filtered.empty:
+            min_temp, max_temp = st.sidebar.slider("Select temperature range (°F)", 
+                                                float(df_filtered['temperature_2m_mean'].min()), 
+                                                float(df_filtered['temperature_2m_mean'].max()), 
+                                                (float(df_filtered['temperature_2m_mean'].min()), 
+                                                float(df_filtered['temperature_2m_mean'].max())))
+            df_filtered = df_filtered[(df_filtered['temperature_2m_mean'] >= min_temp) & 
+                                    (df_filtered['temperature_2m_mean'] <= max_temp)]
 else:
     st.sidebar.write("No data available for the selected dataset.")
 plot_types = ['Line', 'Scatter', 'Bar']
