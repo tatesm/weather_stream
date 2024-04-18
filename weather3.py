@@ -266,57 +266,41 @@ st.sidebar.markdown("""
 """)   
 # Date range filter
 if not df_selected.empty:
-    default_start, default_end = df_selected['date'].min(), df_selected['date'].max()
-    date_range = st.sidebar.date_input(
+    start_date, end_date = st.sidebar.date_input(
         "Select date range",
-        value=[default_start, default_end],
-        min_value=default_start,
-        max_value=default_end
+        [df_selected['date'].min(), df_selected['date'].max()],
+        min_value=df_selected['date'].min(),
+        max_value=df_selected['date'].max()
     )
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-        start_date = pd.to_datetime(start_date).tz_localize('UTC')
-        end_date = pd.to_datetime(end_date).tz_localize('UTC')
+    
+    start_date = pd.to_datetime(start_date).tz_localize('UTC')
+    end_date = pd.to_datetime(end_date).tz_localize('UTC')
+    df_filtered = df_selected[(df_selected['date'] >= start_date) & 
+                                (df_selected['date'] <= end_date)]
 
-        df_filtered = df_selected[(df_selected['date'] >= start_date) & (df_selected['date'] <= end_date)]
+    # Weather code filter
+    weather_options = df_selected['weather_code'].dropna().unique()
+    selected_weather = st.sidebar.multiselect('Select weather conditions', options=weather_options)
+    if selected_weather:
+        df_filtered = df_filtered[df_filtered['weather_code'].isin(selected_weather)]
 
-        # Weather code filter
-        weather_options = df_filtered['weather_code'].dropna().unique()
-        selected_weather = st.sidebar.multiselect('Select weather conditions', options=weather_options)
-        if selected_weather:
-            df_filtered = df_filtered[df_filtered['weather_code'].isin(selected_weather)]
-
-        # Temperature range selector
-        if not df_filtered.empty:
-            min_temp, max_temp = st.sidebar.slider(
-                "Select temperature range (°F)", 
-                float(df_filtered['temperature_2m_mean'].min()), 
-                float(df_filtered['temperature_2m_mean'].max()), 
-                (float(df_filtered['temperature_2m_mean'].min()), 
-                float(df_filtered['temperature_2m_mean'].max())))
-            df_filtered = df_filtered[
-                (df_filtered['temperature_2m_mean'] >= min_temp) & 
-                (df_filtered['temperature_2m_mean'] <= max_temp)]
-
-        # Plotting section
-        if not df_filtered.empty:
-            plot_types = ['Line', 'Scatter', 'Bar']
-            selected_plot_type = st.sidebar.selectbox('Select plot type:', plot_types)
-            x_col = st.sidebar.selectbox('Select X-axis variable:', df_filtered.columns)
-            y_col = st.sidebar.selectbox('Select Y-axis variable:', df_filtered.columns, index=df_filtered.columns.get_loc('shortwave_radiation_sum'))
-            plot = generate_plot(selected_plot_type, df_filtered, x_col, y_col)
-            st.plotly_chart(plot)
-        else:
-            st.write("No data available for plotting.")
-    else:
-        st.sidebar.write("Please select both start and end dates.")
-
+    # Temperature range selector
+    if not df_filtered.empty:
+        min_temp, max_temp = st.sidebar.slider("Select temperature range (°F)", 
+                                               float(df_filtered['temperature_2m_mean'].min()), 
+                                               float(df_filtered['temperature_2m_mean'].max()), 
+                                               (float(df_filtered['temperature_2m_mean'].min()), 
+                                               float(df_filtered['temperature_2m_mean'].max())))
+        df_filtered = df_filtered[(df_filtered['temperature_2m_mean'] >= min_temp) & 
+                                  (df_filtered['temperature_2m_mean'] <= max_temp)]
 else:
     st.sidebar.write("No data available for the selected dataset.")
+plot_types = ['Line', 'Scatter', 'Bar']
+selected_plot_type = st.sidebar.selectbox('Select plot type:', plot_types)
 
-# Reset button to reload the app
-if st.sidebar.button("Reset Filters"):
-    st.experimental_rerun()
+# Generating the selected plot
+x_col = st.sidebar.selectbox('Select X-axis variable:', df_filtered.columns)
+y_col = st.sidebar.selectbox('Select Y-axis variable:', df_filtered.columns, index=df_filtered.columns.get_loc('shortwave_radiation_sum'))
 
 def generate_plot(plot_type, df, x, y):
     if plot_type == 'Line':
@@ -324,7 +308,7 @@ def generate_plot(plot_type, df, x, y):
     elif plot_type == 'Scatter':
         fig = px.scatter(df, x=x, y=y, title=f'Edited Daily Graph: {x} vs {y}')
     elif plot_type == 'Bar':
-        fig = px.bar(df, x=x, y=y, title=f'Edited Daily Graph: {x} vs {y}')
+        fig = px.bar(df, x=x, y=y, title=f'Edited Daily Graph:{x} vs {y}')
     return fig
 
 if not df_filtered.empty:
