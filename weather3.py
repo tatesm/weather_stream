@@ -266,11 +266,12 @@ st.sidebar.markdown("""
 """)   
 # Date range filter
 if not df_selected.empty:
-    start_date, end_date = st.sidebar.date_input(
+    default_start, default_end = df_selected['date'].min(), df_selected['date'].max()
+    date_range = st.sidebar.date_input(
         "Select date range",
-        [df_selected['date'].min(), df_selected['date'].max()],
-        min_value=df_selected['date'].min(),
-        max_value=df_selected['date'].max()
+        value=[default_start, default_end],
+        min_value=default_start,
+        max_value=default_end
     )
     if len(date_range) == 2:
         start_date, end_date = date_range
